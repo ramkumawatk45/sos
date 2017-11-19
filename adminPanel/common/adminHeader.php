@@ -88,14 +88,16 @@
                <li class="index <?php if(basename($_SERVER['SCRIPT_NAME']) == 'dashboard.php'){echo 'active'; }else { echo basename($_SERVER['SCRIPT_NAME']); } ?>"><a href="dashboard.php"><i class="fa fa-dashboard"></i> Dashboard</a></li>
 			   <li class="index <?php if(basename($_SERVER['SCRIPT_NAME']) == 'changePassword.php'){echo 'active'; }else { echo basename($_SERVER['SCRIPT_NAME']); } ?>"><a href="changePassword.php"><i class="fa fa-bars"></i> Change Password</a></li>	 
 				<li class="groups  <?php if(basename($_SERVER['SCRIPT_NAME']) == 'groups.php'){echo 'active'; }else { echo basename($_SERVER['SCRIPT_NAME']); } ?>" ><a href="groups.php"><i class="fa fa-paperclip"></i>Groups</a></li>
+				<li class="uploadItem  <?php if(basename($_SERVER['SCRIPT_NAME']) == 'uploadItem.php'){echo 'active'; }else { echo basename($_SERVER['SCRIPT_NAME']); } ?>" ><a href="uploadItem.php"><i class="fa fa-paperclip"></i>Upload Items</a></li>
 				<li class="items  <?php if(basename($_SERVER['SCRIPT_NAME']) == 'items.php'){echo 'active'; }else { echo basename($_SERVER['SCRIPT_NAME']); } ?>" ><a href="items.php"><i class="fa fa-paperclip"></i>Items</a></li>
+				<li class="bill  <?php if(basename($_SERVER['SCRIPT_NAME']) == 'bill.php'){echo 'active'; }else { echo basename($_SERVER['SCRIPT_NAME']); } ?>" ><a href="bill.php"><i class="fa fa-paperclip"></i>Generate Bill</a></li>
                </ul>  
             </li>
           </ul>
         </section>
         <!-- /.sidebar -->
       </aside>
-	  <div class="loading hide" id="loading">Loading&#8230;</div>
+	 <div id="overlay"><div><img src="images/loading.gif" width="64px" height="64px"/></div></div>
 <style>
 .logo-lg img {
     width: 50%;
@@ -308,5 +310,26 @@ body {
     padding: 8px 0px 8px 15px;
     display: block;
     font-size: 14px;
+}
+.link {padding: 10px 15px;background: transparent;border:#bccfd8 1px solid;border-left:0px;cursor:pointer;color:#607d8b}
+.disabled {cursor:not-allowed;color: #bccfd8;}
+.current {background: #bccfd8;}
+.first{border-left:#bccfd8 1px solid;}
+.question {font-weight:bold;}
+.answer{padding-top: 10px;}
+#pagination{margin-top: 20px;padding-top: 30px;border-top: #F0F0F0 1px solid;}
+.dot {padding: 10px 15px;background: transparent;border-right: #bccfd8 1px solid;}
+#overlay {background-color: rgba(0, 0, 0, 0.6);z-index: 999;position: absolute;left: 0;top: 0;width: 100%;height: 100%;display: none;}
+#overlay div {position:absolute;left:50%;top:50%;margin-top:-32px;margin-left:-32px;}
+.page-content {padding: 20px;margin: 0 auto;}
+.pagination-setting {padding:10px; margin:5px 0px 10px;border:#bccfd8  1px solid;color:#607d8b;}
+.dataTables_wrapper .dataTables_filter {
+    float: right;
+    text-align: right;
+}
+.bill-box-section 
+{
+	height:375px;
+	overflow:auto;
 }
 </style>

@@ -1,20 +1,16 @@
-<?php
+<?php  ini_set('display_errors', 1);
+		ini_set('display_startup_errors', 1);
+		error_reporting(E_ALL);
+		error_reporting(E_ALL ^ E_DEPRECATED);
 include("controller/pages_controller.php");
-?>
-<?php
 require('library/php-excel-reader/excel_reader2.php');
 require('library/SpreadsheetReader.php');
-require('common/conn.php');
 $msg = '';	
 if(isset($_POST['Submit']))
 {
-	$groupId = $_REQUEST['groupId'];
 	$mimes = ['application/vnd.ms-excel','text/xls','text/xlsx','application/vnd.oasis.opendocument.spreadsheet','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']; 
 	if(in_array($_FILES["file"]["type"],$mimes))
 	{
-		ini_set('display_errors', 1);
-		ini_set('display_startup_errors', 1);
-		error_reporting(E_ALL);
 		$uploadFilePath = 'uploads/'.basename($_FILES['file']['name']);
 		move_uploaded_file($_FILES['file']['tmp_name'], $uploadFilePath);
 		$Reader = new SpreadsheetReader($uploadFilePath);
@@ -26,15 +22,48 @@ if(isset($_POST['Submit']))
 			foreach ($Reader as $Row)
 	        {
 				$itemCode = isset($Row[0]) ? $Row[0] : '';
-				$itemName = isset($Row[1]) ? $Row[1] : '';
-				$itemUnit = isset($Row[2]) ? $Row[2] : '';
-				$itemPrate = isset($Row[3]) ? $Row[3] : '';
-				$itemArate = isset($Row[4]) ? $Row[4] : '';
-				$itemBrate = isset($Row[5]) ? $Row[5] : '';
-				$itemMRPrate = isset($Row[6]) ? $Row[6] : '';
+				$groupName = isset($Row[1]) ? $Row[1] : '';
+				$itemName = isset($Row[2]) ? $Row[2] : '';
+				$itemUnit = isset($Row[3]) ? $Row[3] : '';
+				$itemPrate = isset($Row[4]) ? $Row[4] : '';
+				$itemArate = isset($Row[5]) ? $Row[5] : '';
+				$itemBrate = isset($Row[6]) ? $Row[6] : '';
+				$itemMRPrate = isset($Row[7]) ? $Row[7] : '';
+				$groupName = strtoupper($groupName);
+				$query="SELECT * FROM groups where groupName='$groupName' and  deleted='0' and status='0' ";
+				$menuData=fetchData($query);
+				$groupId = "";
+				$groupPercentage = "";
+				if(is_array($menuData) || is_object($menuData))
+				{
+					foreach($menuData as $tableData)
+					{
+						$groupId = $tableData['id'];
+						$groupPercentage = $tableData['groupPercentage'];
+					}
+				}
+				$alreadyExit = true;
+				$sql = "select itemName from items where itemName='$itemName' and deleted ='0' ";
+				$res = mysql_query($sql);
+				if(mysql_num_rows($res))
+				{
+					var_dump("Items ".$itemName." Already exists.");
+					$alreadyExit = false;
+				}
+				else
+				{	
 				
-				$query = "insert into items(itemCode,groupId,itemName,itemUnit,itemPrate,itemArate,itemBrate,itemMRPrate) values('".$itemCode."','".$groupId."','".$itemName."',	'".$itemUnit."','".$itemPrate."','".$itemArate."','".$itemBrate."','".$itemMRPrate."')";
-				mysql_query($query);	
+					$query = "insert into items(itemCode,groupId,itemName,itemUnit,itemPrate,itemArate,itemBrate,itemMRPrate,itemAper,itemBper) values('".$itemCode."','".$groupId."','".$itemName."',	'".$itemUnit."','".$itemPrate."','".$itemArate."','".$itemBrate."','".$itemMRPrate."','".$groupPercentage."','".$groupPercentage."')";
+					//var_dump($query);
+					if($itemCode && $groupId &&  $itemName &&  $itemUnit &&  $itemPrate && $itemArate && $itemBrate && $itemMRPrate)
+					{	
+						mysql_query($query);
+						if($alreadyExit)
+						{	
+							$pageHrefLink="uploadItem.php";
+						}	
+					}	
+				}		
 	        }
 		}
 		$msg = "Data Inserted in database";
@@ -59,16 +88,6 @@ if(isset($_POST['Submit']))
                 	</div><!-- /.box-header -->
                 <!-- form start -->
                <form method="POST"  enctype="multipart/form-data">
-			   <div class="form-group col-md-12">
-					<label>Group Name</label>
-					<select class="form-control" name="groupId" id="groupId" required >
-						<?php 
-                    	$query="SELECT * FROM groups where deleted='0' and status='0' ";
-						$menuData=fetchData($query);
-						foreach($menuData as $tableData)
-						{ ?><option  value="<?php echo $tableData['id']; ?>"><?php  echo $tableData['groupName']; ?></option>	<?php } ?>
-						</select>
-				</div>		
 				<div class="form-group col-md-12">
 					<label>Upload Excel File</label>
 					<input type="file" name="file" class="form-control" required>

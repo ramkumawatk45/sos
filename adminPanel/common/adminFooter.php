@@ -109,30 +109,15 @@ function isTop(elem)
 }
 </script>
 
-<?php if($msg){?>
-<script>
-alert("<?php echo $msg ?>");
-window.location.href = "<?php echo $pageHrefLink?>";
-</script>
-<?php
-}
- if($edit ==true){?>
-<script>
-var parent = "<?php echo $parentId;?>";
-console.log( parent );
-if(parent > 0)
+<?php if($msg)
 {
-console.log( parent );
-$("#parentCategory").val(parent);
-}
-else
-{
-	$("#parentCategory").attr("disabled","disabled");
-	document.getElementById("top").checked = true;
-}
-</script>
+	?>
+	<script>
+		alert("<?php echo $msg ?>");
+		window.location.href = "<?php echo $pageHrefLink?>";
+	</script>
 <?php
-}
+	}
+ ob_end_flush();
 ?>
-<?php ob_end_flush(); ?>
 

@@ -1,3 +1,8 @@
+ <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap-select.min.css" />
+	<script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/bootstrap-select.min.js"></script>
 <?php
 include("controller/pages_controller.php");
 $menuType =+"gallery";
@@ -97,7 +102,9 @@ function deleteRow(btn) {
 }	
 function appendNewRow()
 {
-	$("#itemList").append("<tr><td class='col-md-1'></td> <td class='col-md-4'><input class='form-control' placeholder='Type or click to select an item' type='text' id='itemName' name='itemName'/></td><td class='col-md-2'><input class='form-control digitsOnly' value='1.00' type='text' name='itemQuantity' id='itemQuantity'/></td><td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemRate' id='itemRate'/></td><td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemTotalAmount' id='itemTotalAmount' readonly/></td><td class='col-md-1'><a onclick='javascript:deleteRow(this);'><span class='glyphicon glyphicon-remove'></span></a></td></tr>");
+	var itemList = "<select class='selectpicker' data-show-subtext='true' data-live-search='true' placeholder='Type or click to select an item' id='itemName' name='itemName'><option>Type or click to select an item</option>";
+	itemList = itemList+"</select>";
+	$("#itemList").append("<tr><td class='col-md-1'></td> <td class='col-md-4'>"+itemList+"</td><td class='col-md-2'><input class='form-control digitsOnly' value='1.00' type='text' name='itemQuantity' id='itemQuantity'/></td><td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemRate' id='itemRate'/></td><td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemTotalAmount' id='itemTotalAmount' readonly/></td><td class='col-md-1'><a onclick='javascript:deleteRow(this);'><span class='glyphicon glyphicon-remove'></span></a></td></tr>");
 	return false;
 }
 $(document).ready(function () {
@@ -113,20 +120,14 @@ $(".digitsOnly").keypress(function (e)
     }
   });	
 });	
-function getItems(ele)
+function setItemValues(ele)
 {
- $.ajax({    //create an ajax request to load_page.php
-        type: "GET",
-        url: "searchItem.php?searchValue="+($(ele).val()),            
-		beforeSend: function(){$("#overlay").show();},	
-        dataType: "html",   //expect html to be returned                
-        success: function(response)
-		{                    
-           console.log(response);
-			setInterval(function() {$("#overlay").hide(); },500);	
-        }
- });
-} 
+	if($("#billType").val() =="retail")
+	{
+		$(".itemRate_1").val($(ele).val());
+		$(".itemTotalAmount_1").val(parseFloat($(".itemQuantity_1").val()*($(ele).val())));
+	}	
+}
 </script>
       <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -165,10 +166,9 @@ function getItems(ele)
                      </div>
 					 <div class="form-group col-md-3">
                         <label>Bill Type</label>
-                        <select class="form-control" name="status">
-						<?php $status=$pageData['status']; ?>
-                        <option value="retail" <?php if($status ==0) echo 'selected'; ?>>Retail Bill</option>
-                        <option value="wholesale" <?php if($status ==1) echo 'selected'; ?> >Whole Sale Bill</option>
+                        <select class="form-control" name="billType" id="billType">
+                        <option value="retail" >Retail Bill</option>
+                        <option value="wholesale" >Whole Sale Bill</option>
                         </select>
                         </div>
 					 <div class="form-group col-md-3">
@@ -189,10 +189,29 @@ function getItems(ele)
 						<tbody id="itemList">
 						<tr>
 						<td class='col-md-1'>1</td> 
-						<td class='col-md-4'><input class='form-control' placeholder='Type or click to select an item' type='text' id='itemName' name='itemName' onkeyup="getItems(this);"/></td>
-						<td class='col-md-2'><input class='form-control digitsOnly' value='1.00' type='text' name='itemQuantity' id='itemQuantity'/></td>
-						<td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemRate' id='itemRate'/></td>
-						<td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemTotalAmount' id='itemTotalAmount' readonly/></td>
+						<td class='col-md-4'>
+						<select class="selectpicker" data-show-subtext="true" data-live-search="true" placeholder='Type or click to select an item' id='itemName' name='itemName' onchange="setItemValues(this)">
+						   <option>Type or click to select an item</option>
+						   <?php 
+							$query="SELECT * FROM items where deleted='0' ";
+							$pageData=fetchData($query);
+							$datainfo ='';
+							if (is_array($pageData) || is_object($pageData))
+							{
+								foreach($pageData as $tableData)
+								{
+								?>
+									<option value="<?php echo $tableData['id']; ?>" alt="<?php echo $tableData['itemUnit']; ?>" brate="<?php echo $tableData['itemBrate']; ?>" arate="<?php echo $tableData['itemArate']; ?>"><?php echo $tableData['itemName']; ?></option>
+								<?php 	
+								} 
+							
+							} 
+						?>	
+						 </select>
+						</td>
+						<td class='col-md-2'><input class='form-control itemQuantity_1 digitsOnly' value='1.00' type='text' name='itemQuantity' id='itemQuantity'/></td>
+						<td class='col-md-2'><input class='form-control itemRate_1 digitsOnly' value='0.00' type='text' name='itemRate' id='itemRate'/></td>
+						<td class='col-md-2'><input class='form-control itemTotalAmount_1 digitsOnly' value='0.00' type='text' name='itemTotalAmount' id='itemTotalAmount' readonly/></td>
 						<td class='col-md-1'><a onclick='javascript:deleteRow(this);'><span class='glyphicon glyphicon-remove'></span></a></td></tr>
 						
 						 </tbody>
@@ -222,5 +241,9 @@ function getItems(ele)
           </div>   <!-- /.row -->
         </section>   
 </div>
+<div class="row">
+      
+    
+    </div>
       <!-- /.content-wrapper -->
 <?php include("common/adminFooter.php");?>

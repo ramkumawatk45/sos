@@ -332,4 +332,37 @@ body {
 	height:375px;
 	overflow:auto;
 }
+select.bs-select-hidden, select.selectpicker 
+{
+    display: block!important;
+}
+.bootstrap-select:not([class*=col-]):not([class*=form-control]):not(.input-group-btn) {
+    width: 250px;
+    float: right;
+    margin-top: -25px;
+}
+div.itemSelect
+{
+	width:80px;
+}
+.selectItemDiv
+{	
+    float: right;
+    margin-top: -25px;
+}
+.selectItemDiv select
+{
+	border-radius:5px;
+	width: 280px;
+	font-size: 15px;
+}	
+a.add-new-item {
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #fff;
+    background: #00588D;
+    line-height: 40px;
+}
 </style>

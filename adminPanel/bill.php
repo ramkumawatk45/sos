@@ -9,6 +9,7 @@ $menuType =+"gallery";
 $msg='';
 $pageHrefLink='';
 $id="";
+$i =2;
 if(isset($_REQUEST['id']))
 {
 	$edit = true;
@@ -55,56 +56,25 @@ if(isset($_REQUEST['addItem']))
 
 ?>
 <script type="text/javascript">
-
-function calculateARate(ele)
-{
-	var aRate = parseFloat($("#pRate").val()*($(ele).val())/100)+parseFloat($("#pRate").val());
-	$("#aRate").val(aRate);
-}
-function calculateAPer(ele)
-{
-	$("#errorMsgDiv").addClass("hide");
-	if(parseFloat($(ele).val()) > parseFloat($("#pRate").val()))
-	{
-		var diff = parseFloat($(ele).val()) - parseFloat($("#pRate").val());	
-		var aPer = parseFloat(diff/parseFloat($("#pRate").val())*100);
-		$("#aPer").val(aPer);
-	}
-	else
-	{
-		$("#errorMsgDiv").removeClass("hide");
-		$("#errorMsg").text("A Rate should be greater than P Rate");
-	}	
-}
-function calculateBRate(ele)
-{
-	var aRate = parseFloat($("#pRate").val()*($(ele).val())/100)+parseFloat($("#pRate").val());
-	$("#bRate").val(aRate);
-}
-function calculateBPer(ele)
-{
-	$("#errorMsgDiv").addClass("hide");
-	if(parseFloat($(ele).val()) > parseFloat($("#pRate").val()))
-	{
-		var diff = parseFloat($(ele).val()) - parseFloat($("#pRate").val());	
-		var aPer = parseFloat(diff/parseFloat($("#pRate").val())*100);
-		$("#bPer").val(aPer);
-	}
-	else
-	{
-		$("#errorMsgDiv").removeClass("hide");
-		$("#errorMsg").text("B Rate should be greater than P Rate");
-	}	
-}
 function deleteRow(btn) {
   var row = btn.parentNode.parentNode;
   row.parentNode.removeChild(row);
 }	
 function appendNewRow()
 {
-	var itemList = "<select class='selectpicker' data-show-subtext='true' data-live-search='true' placeholder='Type or click to select an item' id='itemName' name='itemName'><option>Type or click to select an item</option>";
-	itemList = itemList+"</select>";
-	$("#itemList").append("<tr><td class='col-md-1'></td> <td class='col-md-4'>"+itemList+"</td><td class='col-md-2'><input class='form-control digitsOnly' value='1.00' type='text' name='itemQuantity' id='itemQuantity'/></td><td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemRate' id='itemRate'/></td><td class='col-md-2'><input class='form-control digitsOnly' value='0.00' type='text' name='itemTotalAmount' id='itemTotalAmount' readonly/></td><td class='col-md-1'><a onclick='javascript:deleteRow(this);'><span class='glyphicon glyphicon-remove'></span></a></td></tr>");
+	var rows= $('tbody#itemList tr.items').length+1;
+	 $.ajax({    //create an ajax request to load_page.php
+        type: "GET",
+        url: "searchItem.php?srNo="+rows,            
+		beforeSend: function(){$("#overlay").show();},	
+        dataType: "html",   //expect html to be returned                
+        success: function(response)
+		{     
+			console.log(response);
+			$("#itemList").append(response);
+			setInterval(function() {$("#overlay").hide(); },500);	
+        }
+	});
 	return false;
 }
 $(document).ready(function () {
@@ -122,12 +92,193 @@ $(".digitsOnly").keypress(function (e)
 });	
 function setItemValues(ele)
 {
+	var rowNumber = $(ele).attr("rownumber");
+	var aRate = parseFloat($(ele).find("option:selected").attr("scrollTop"));
+	var bRate = parseFloat($(ele).find("option:selected").attr("scrollBottom"));
+	var unit = $(ele).find("option:selected").attr("scrollWidth");
+	var itemCode = $(ele).find("option:selected").val();
 	if($("#billType").val() =="retail")
 	{
-		$(".itemRate_1").val($(ele).val());
-		$(".itemTotalAmount_1").val(parseFloat($(".itemQuantity_1").val()*($(ele).val())));
+		$(".itemRate_"+rowNumber).val(aRate);
+		$(".itemUnit_"+rowNumber).val(unit);
+		$(".itemTotalAmount_"+rowNumber).val(parseFloat($(".itemQuantity_"+rowNumber).val()*(aRate)));
+		subTotal();	
+	}
+	else if($("#billType").val() =="wholesale")
+	{
+		$(".itemRate_"+rowNumber).val(bRate);
+		$(".itemUnit_"+rowNumber).val(unit);
+		$(".itemTotalAmount_"+rowNumber).val(parseFloat($(".itemQuantity_"+rowNumber).val()*(bRate)));
+		subTotal();	
+	}	
+	$(".itemCode_"+rowNumber).val(itemCode);
+}
+function selectItem(ele,value)
+{
+	if(value > 0)
+	{	
+		var eleArray = ele.split("_");
+		$("#itemName_"+eleArray[1]).val(value).change();
+		subTotal();	
+	}
+	else
+	{
+		 $("#errorMsgDiv").removeClass("hide");
+		$("#errorMsg").text("Item code is invalid.");
+         return false;
 	}	
 }
+function selectQuan(ele,value)
+{
+	if(value && value > 0)
+	{	
+		var eleArray  = $(ele).attr("id");
+		var id = eleArray.split("_");
+		var rowNumber = id[1];
+		var itemRate = $(".itemRate_"+rowNumber).val();
+		var itemUnit = $("select#itemUnit_"+rowNumber+" option:selected").val();
+		var itemAmount = 0;
+		if(itemUnit.toUpperCase() =="GRAM")
+		{	
+			itemAmount = (value/1000)*itemRate;
+		}
+		else if(itemUnit.toUpperCase() =="KG")
+		{
+			itemAmount = value*itemRate;
+		}
+		else
+		{
+			itemAmount = value*itemRate;
+		}	
+		$(".itemTotalAmount_"+rowNumber).val(roundTo(itemAmount,2));
+		subTotal();	
+	}
+	else
+	{
+		 $("#errorMsgDiv").removeClass("hide");
+		$("#errorMsg").text("Could not process.");
+         return false;
+	}	
+}
+function selectAmount(ele,value)
+{
+	var eleArray  = $(ele).attr("id");
+	var id = eleArray.split("_");
+	var rowNumber = id[1];
+	var itemRate = $(".itemRate_"+rowNumber).val();
+	var itemUnit = $("select#itemUnit_"+rowNumber+" option:selected").val();
+	var itemQuantity = 0;
+	if(value && value > 0)
+	{	
+		if(itemUnit.toUpperCase() =="GRAM")
+		{	
+			itemQuantity = (value/itemRate)*1000;
+		}
+		else if(itemUnit.toUpperCase() =="KG")
+		{
+			itemQuantity = value/itemRate;
+		}
+		else
+		{
+			itemQuantity = value/itemRate;
+		}	
+		$(".itemQuantity_"+rowNumber).val(roundTo(itemQuantity,2));
+		subTotal();	
+	}
+	else
+	{
+		 $("#errorMsgDiv").removeClass("hide");
+		$("#errorMsg").text("Could not process.");
+         return false;
+	}	
+}
+function selectUnit(ele,value)
+{
+	if(value)
+	{	
+		var rowNumber = $(ele).attr("rownumber");
+		var itemRate = $(".itemRate_"+rowNumber).val();
+		var itemQuantity = $(".itemQuantity_"+rowNumber).val();
+		var itemAmount = 0;
+		if(value.toUpperCase() =="GRAM")
+		{	
+			itemAmount = (itemQuantity/1000)*itemRate;
+		}
+		else if(value.toUpperCase() =="KG")
+		{
+			itemAmount = itemQuantity*itemRate;
+		}
+		else
+		{
+			itemAmount = itemQuantity*itemRate;
+		}	
+		$(".itemTotalAmount_"+rowNumber).val(roundTo(itemAmount,2));
+	}
+	else
+	{
+		 $("#errorMsgDiv").removeClass("hide");
+		$("#errorMsg").text("Could not process.");
+         return false;
+	}
+	subTotal();	
+}
+function subTotal()
+{
+	$("#errorMsgDiv").addClass("hide");
+	var subTot = 0;
+	$('tbody#itemList tr.items').each(function (index, value) 
+	{ 
+		index = index+1; 
+		var subSubTot= $(".itemTotalAmount_"+index).val();
+		subTot = roundTo(parseFloat(subTot)+parseFloat(subSubTot),2);
+	});
+	$("#subTotal").val(subTot);
+	$("#errorMsgDiv").addClass("hide");
+	var subTotal = $("#subTotal").val();
+	var discount = parseFloat(subTotal)-parseFloat($("#billAfterDiscount").val());
+	if(parseFloat($("#billAfterDiscount").val()) < parseFloat(subTotal))
+	{	
+		$("#billAfterDiscount").val(parseFloat($("#billAfterDiscount").val()));
+		$("#billTotalAmount").val(roundTo(discount,2));
+	}
+	else
+	{
+		$("#errorMsgDiv").removeClass("hide");
+		$("#errorMsg").text("Discount not allowed grethar than total amount.Please review the discount amount.");
+		return false;
+	}
+}	
+function billDiscounts(value)
+{
+	$("#errorMsgDiv").addClass("hide");
+	if(value)
+	{
+		var subTotal = $("#subTotal").val();
+		var discount = parseFloat(subTotal)-parseFloat(value);
+		if(parseFloat(value) < parseFloat(subTotal))
+		{	
+			$("#billAfterDiscount").val(parseFloat(value));
+			$("#billTotalAmount").val(roundTo(discount,2));
+		}
+		else
+		{
+			$("#errorMsgDiv").removeClass("hide");
+			$("#errorMsg").text("Discount not allowed grethar than total amount.Please review the discount amount.");
+			return false;
+		}	
+	}	
+}	
+function roundTo(n, digits) 
+{
+     if (digits === undefined) {
+       digits = 0;
+     }
+
+     var multiplicator = Math.pow(10, digits);
+     n = parseFloat((n * multiplicator).toFixed(11));
+     var test =(Math.round(n) / multiplicator);
+     return +(test.toFixed(digits));
+}		
 </script>
       <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -158,11 +309,11 @@ function setItemValues(ele)
                  <div class="box-body ">
 					<div class="form-group col-md-3">
                         <label for="pageTitle">Vendor Name</label>
-                        <input type="text" class="form-control" id="vendorName" name="vendorName" placeholder="Vendor Name" maxlength="50" value="<?php if($edit) echo $pageData['vendorName']; ?>" required />                   
+                        <input type="text" class="form-control" id="vendorName" name="vendorName" value="Cash" placeholder="Vendor Name" maxlength="50" value="<?php if($edit) echo $pageData['vendorName']; ?>" required />                   
                      </div>
 					  <div class="form-group col-md-3">
                         <label for="pageTitle">Bill Date</label>
-                        <input type="text" class="form-control date" id="billDate" name="billDate" placeholder="Bill Date" maxlength="15" value="<?php if($edit) echo $pageData['billDate']; ?>"  />                   
+                        <input type="text" class="form-control date" id="billDate" name="billDate" value="<?php echo Date("d/m/Y"); ?>" placeholder="Bill Date" maxlength="15" value="<?php if($edit) echo $pageData['billDate']; ?>"  />                   
                      </div>
 					 <div class="form-group col-md-3">
                         <label>Bill Type</label>
@@ -179,18 +330,23 @@ function setItemValues(ele)
 						<thead>
 						  <tr>
 							<th class="col-md-1">Sr. no.</th>
-							<th class="col-md-4">ITEMS & DESCRIPTION</th>
-							<th class="col-md-2">QUANTITY</th>
-							<th class="col-md-2">RATE</th>
-							<th class="col-md-2">AMOUNT </th>
+							<th class="col-md-5">ITEMS & DESCRIPTION</th>
+							<th class="col-md-1">QUANTITY</th>
+							<th class="col-md-1"></th>
+							<th class="col-md-1">RATE</th>
+							<th class="col-md-1">AMOUNT </th>
 							<th class="col-md-1"></th>
 						  </tr>
 						</thead>
 						<tbody id="itemList">
-						<tr>
+						<tr class="items">
 						<td class='col-md-1'>1</td> 
 						<td class='col-md-4'>
-						<select class="selectpicker" data-show-subtext="true" data-live-search="true" placeholder='Type or click to select an item' id='itemName' name='itemName' onchange="setItemValues(this)">
+						<div class="itemSelect">
+						<input class='form-control itemCode_1 digitsOnly' placeholder="Item Code" onkeyup="selectItem(this.id,this.value)" type='text' name='itemCode' id='itemCode_1'/>
+						</div>
+						<div class="selectItemDiv">
+						<select class="itemSelect_1"  rownumber='1' placeholder='Type or click to select an item' id='itemName_1' name='itemName' onchange="setItemValues(this)">
 						   <option>Type or click to select an item</option>
 						   <?php 
 							$query="SELECT * FROM items where deleted='0' ";
@@ -201,36 +357,46 @@ function setItemValues(ele)
 								foreach($pageData as $tableData)
 								{
 								?>
-									<option value="<?php echo $tableData['id']; ?>" alt="<?php echo $tableData['itemUnit']; ?>" brate="<?php echo $tableData['itemBrate']; ?>" arate="<?php echo $tableData['itemArate']; ?>"><?php echo $tableData['itemName']; ?></option>
+									<option value="<?php echo $tableData['itemCode']; ?>" scrollWidth="<?php echo $tableData['itemUnit']; ?>" scrollBottom="<?php echo $tableData['itemBrate']; ?>" scrollTop="<?php echo $tableData['itemArate']; ?>"><?php echo $tableData['itemName']; ?></option>
 								<?php 	
 								} 
 							
 							} 
 						?>	
 						 </select>
+						 </div>
 						</td>
-						<td class='col-md-2'><input class='form-control itemQuantity_1 digitsOnly' value='1.00' type='text' name='itemQuantity' id='itemQuantity'/></td>
-						<td class='col-md-2'><input class='form-control itemRate_1 digitsOnly' value='0.00' type='text' name='itemRate' id='itemRate'/></td>
-						<td class='col-md-2'><input class='form-control itemTotalAmount_1 digitsOnly' value='0.00' type='text' name='itemTotalAmount' id='itemTotalAmount' readonly/></td>
+						<td class='col-md-1'>
+						<input class='form-control itemQuantity_1 digitsOnly' rownumber='1' value='1' type='text' onkeyup="selectQuan(this,this.value)" name='itemQuantity' id='itemQuantity_1'/>
+						</td>
+						<td class='col-md-1'>
+						<select class="form-control itemUnit_1" rownumber='1' name="itemUnit" id="itemUnit_1" onchange="selectUnit(this,this.value)">
+                        <option value="KG" >KG</option>
+                        <option value="GRAM" >GRAM</option>
+						 <option value="PCS" >PCS</option>
+                        </select>
+						</td>
+						<td class='col-md-2'><input class='form-control itemRate_1 digitsOnly' value='0' type='text' name='itemRate' id='itemRate_1' readonly /></td>
+						<td class='col-md-2'><input class='form-control itemTotalAmount_1 digitsOnly' value='0' type='text'  name='itemTotalAmount' onkeyup="selectAmount(this,this.value)" id='itemTotalAmount_1'/></td>
 						<td class='col-md-1'><a onclick='javascript:deleteRow(this);'><span class='glyphicon glyphicon-remove'></span></a></td></tr>
 						
 						 </tbody>
                   </table>
-                    <a onclick="appendNewRow()"><small><i class="icon-plus"></i></small> Add another line</a>
+                    <a onclick="appendNewRow()" class="add-new-item"><small><i class="icon-plus"></i></small> Add another line</a>
                   </div><!-- /.box-body -->
                   <div class="box-footer">
 					 <table id="category" class="table table-bordered table-striped">
 					 <tr>
 						<td class='col-md-6'>&nbsp;</td>
-						<td class='col-md-6'><span> Sub total </span> <span class="pull-right"><input type='text' class='form-control digitsOnly' value="0.00" readonly /></span></td>
+						<td class='col-md-6'><span> Sub total </span> <span class="pull-right"><input type='text' id="subTotal" class='form-control  digitsOnly' value="0.00" readonly /></span></td>
 					 </tr>
 					  <tr>
 						<td class='col-md-6'>&nbsp;</td>
-						<td class='col-md-6'><span><input type='text' class='digitsOnly' placeholder="Discount" /> </span>  <span> <input type='text' placeholder="" class='digitsOnly' /> </span><span class="pull-right"><input type='text' value="0.00" class='form-control digitsOnly' readonly /></span></td>
+						<td class='col-md-6'><span><input type='text' class='digitsOnly' placeholder="Discount" disabled /> </span>  <span> <input type='text' placeholder="" class='digitsOnly' id="billDiscount" onkeyup="billDiscounts(this.value);" /> </span><span class="pull-right"><input type='text' value="0.00" id="billAfterDiscount" class='form-control digitsOnly' readonly /></span></td>
 					 </tr>
 					 <tr>
 						<td class='col-md-6'>&nbsp;</td>
-						<td class='col-md-6'><span> Total </span> <span class="pull-right"><input type='text' class='form-control digitsOnly' value="0.00" readonly /></span></td>
+						<td class='col-md-6'><span> Total </span> <span class="pull-right"><input type='text' class='form-control digitsOnly' value="0.00" readonly id="billTotalAmount" /></span></td>
 					 </tr>
 					</table>		
                   </div>

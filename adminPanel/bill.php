@@ -236,17 +236,20 @@ function subTotal()
 	$("#errorMsgDiv").addClass("hide");
 	var subTotal = $("#subTotal").val();
 	var discount = parseFloat(subTotal)-parseFloat($("#billAfterDiscount").val());
-	if(parseFloat($("#billAfterDiscount").val()) < parseFloat(subTotal))
-	{	
-		$("#billAfterDiscount").val(parseFloat($("#billAfterDiscount").val()));
-		$("#billTotalAmount").val(roundTo(discount,2));
-	}
-	else
+	if(subTotal)
 	{
-		$("#errorMsgDiv").removeClass("hide");
-		$("#errorMsg").text("Discount not allowed grethar than total amount.Please review the discount amount.");
-		return false;
-	}
+		if(parseFloat($("#billAfterDiscount").val()) < parseFloat(subTotal))
+		{	
+			$("#billAfterDiscount").val(parseFloat($("#billAfterDiscount").val()));
+			$("#billTotalAmount").val(roundTo(discount,2));
+		}
+		else
+		{
+			$("#errorMsgDiv").removeClass("hide");
+			$("#errorMsg").text("Discount not allowed grethar than total amount.Please review the discount amount.");
+			return false;
+		}
+	}	
 }	
 function billDiscounts(value)
 {
@@ -255,17 +258,24 @@ function billDiscounts(value)
 	{
 		var subTotal = $("#subTotal").val();
 		var discount = parseFloat(subTotal)-parseFloat(value);
-		if(parseFloat(value) < parseFloat(subTotal))
-		{	
-			$("#billAfterDiscount").val(parseFloat(value));
-			$("#billTotalAmount").val(roundTo(discount,2));
-		}
-		else
+		if(subTotal)
 		{
-			$("#errorMsgDiv").removeClass("hide");
-			$("#errorMsg").text("Discount not allowed grethar than total amount.Please review the discount amount.");
-			return false;
-		}	
+			if(parseFloat(value) < parseFloat(subTotal))
+			{	
+				$("#billAfterDiscount").val(parseFloat(value));
+				$("#billTotalAmount").val(roundTo(discount,2));
+			}
+			else
+			{
+				$("#errorMsgDiv").removeClass("hide");
+				$("#errorMsg").text("Discount not allowed grethar than total amount.Please review the discount amount.");
+				return false;
+			}
+		}		
+	}
+	else
+	{
+		$("#billAfterDiscount").val('0');
 	}	
 }	
 function roundTo(n, digits) 
@@ -392,7 +402,7 @@ function roundTo(n, digits)
 					 </tr>
 					  <tr>
 						<td class='col-md-6'>&nbsp;</td>
-						<td class='col-md-6'><span><input type='text' class='digitsOnly' placeholder="Discount" disabled /> </span>  <span> <input type='text' placeholder="" class='digitsOnly' id="billDiscount" onkeyup="billDiscounts(this.value);" /> </span><span class="pull-right"><input type='text' value="0.00" id="billAfterDiscount" class='form-control digitsOnly' readonly /></span></td>
+						<td class='col-md-6'><span> Discount </span>  <span> <input type='text' placeholder="" class='digitsOnly' id="billDiscount" onkeyup="billDiscounts(this.value);" /> </span><span class="pull-right"><input type='text' value="0.00" id="billAfterDiscount" class='form-control digitsOnly' readonly /></span></td>
 					 </tr>
 					 <tr>
 						<td class='col-md-6'>&nbsp;</td>
